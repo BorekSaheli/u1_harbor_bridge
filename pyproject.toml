@@ -17,3 +17,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["genetic_algorithm_pfm"]
+
+[tool.uv]
+managed = true
+package = true
