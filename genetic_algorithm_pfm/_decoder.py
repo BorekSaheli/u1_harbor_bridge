@@ -57,14 +57,6 @@ class _Decoding:
         integer = int(chars, 2)
 
         # scale integer to desired range
-        ret = bounds[0] + (integer / self.largest_value) * (bounds[1] - bounds[0])
-        if ret > 7000:
-            print(len(substring))
-            print(bounds[0])
-            print(integer)
-            print(self.largest_value)
-            print(bounds[1])
-            raise ValueError('X2 > 7000. Je script is kapot!')
         return bounds[0] + (integer / self.largest_value) * (bounds[1] - bounds[0])
 
     def inverse_decode(self, decoded):
