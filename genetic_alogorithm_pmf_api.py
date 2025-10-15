@@ -20,19 +20,39 @@ class Result:
         self.stakeholders = stakeholders_data
         self.problem = problem
 
-    def plot(self):
+    def plot(self, paradigm=''):
         """Plot the preference curves with optimal solutions."""
         n_stakeholders = len(self.stakeholders)
 
-        fig, axes = plt.subplots(1, n_stakeholders, figsize=(5*n_stakeholders, 5))
-        if n_stakeholders == 1:
-            axes = [axes]
+        # Create 2-row layout: 3 plots in first row, remaining in second row
+        if n_stakeholders <= 3:
+            # If 3 or fewer, use single row
+            fig, axes = plt.subplots(1, n_stakeholders, figsize=(5*n_stakeholders, 5))
+            if n_stakeholders == 1:
+                axes = [axes]
+            axes_flat = axes if isinstance(axes, np.ndarray) else [axes]
+        else:
+            # Use 2 rows: 3 in first row, rest in second
+            n_cols = 3
+            fig, axes = plt.subplots(2, n_cols, figsize=(5*n_cols, 10))
+            axes_flat = axes.flatten()
+
+            # Hide unused subplots in second row if n_stakeholders < 6
+            for i in range(n_stakeholders, len(axes_flat)):
+                axes_flat[i].axis('off')
+
+        # Add main title
+        if paradigm:
+            fig.suptitle(f'Multi-Stakeholder Optimization Results - {paradigm.upper()} Paradigm',
+                        fontsize=16, fontweight='bold', y=0.995)
 
         for i, (name, data) in enumerate(self.stakeholders.items()):
-            ax = axes[i]
+            ax = axes_flat[i]
 
-            # Get preference curve points
-            x_points, y_points = self.problem.stakeholders[i]['preference_points']
+            # Get preference curve points and x-label
+            stakeholder_info = self.problem.stakeholders[i]
+            x_points, y_points = stakeholder_info['preference_points']
+            x_label = stakeholder_info.get('x_label', 'Objective value')
 
             # Create continuous curve
             x_range = np.linspace(min(x_points), max(x_points), 100)
@@ -48,7 +68,7 @@ class Result:
             ax.set_xlim((min(x_points), max(x_points)))
             ax.set_ylim((0, 102))
             ax.set_title(name)
-            ax.set_xlabel('Objective value')
+            ax.set_xlabel(x_label)
             ax.set_ylabel('Preference score')
             ax.grid(linestyle='--')
             ax.legend()
@@ -56,19 +76,64 @@ class Result:
         fig.tight_layout()
         plt.show()
 
+    def print_summary(self):
+        """Public method to print optimization summary."""
+        self._print_summary()
+
+    def _print_summary(self):
+        """Print a clean summary of the optimization problem and results."""
+        print("\n" + "="*80)
+        print("OPTIMIZATION SUMMARY")
+        print("="*80)
+
+        # Variables
+        print("\nDESIGN VARIABLES:")
+        for var_name, var_value in self.variables.items():
+            # Add description if available
+            description = self.problem.variable_descriptions.get(var_name, '')
+            if description:
+                print(f"   {var_name} = {var_value:.4f}  ({description})")
+            else:
+                print(f"   {var_name} = {var_value:.4f}")
+
+        print(f"\nAGGREGATE SCORE: {self.score:.4f}")
+
+        # Stakeholders and their objectives
+        print("\nSTAKEHOLDERS & OBJECTIVES:")
+        print("-" * 80)
+        for i, (name, data) in enumerate(self.stakeholders.items()):
+            stakeholder_info = self.problem.stakeholders[i]
+            print(f"\n   {name}:")
+            print(f"      Objective function: {stakeholder_info['objective']}")
+            print(f"      Weight: {stakeholder_info['weight']:.2f}")
+            print(f"      Objective value: {data['objective_value']:.4f}")
+            print(f"      Preference score: {data['preference_score']:.2f}/100")
+
+        # Constraints
+        if self.problem.constraints:
+            print("\nCONSTRAINTS:")
+            print("-" * 80)
+            for i, constraint in enumerate(self.problem.constraints, 1):
+                print(f"   {i}. {constraint}")
+
+        print("\n" + "="*80 + "\n")
+
 
 class Problem:
     """Main problem class for multi-stakeholder optimization."""
 
-    def __init__(self, variables, bounds):
+    def __init__(self, variables, bounds, variable_descriptions=None):
         """
         Initialize the problem.
 
         :param variables: List of variable names (e.g., ['x1', 'x2', 'x3', 'x4'])
         :param bounds: Either a single [min, max] pair or list of pairs for each variable
+        :param variable_descriptions: Optional dict mapping variable names to descriptions
+                                      (e.g., {'x1': 'Vertical clearance [meters]'})
         """
         self.variable_names = variables
         self.n_variables = len(variables)
+        self.variable_descriptions = variable_descriptions or {}
 
         # Handle bounds
         if len(bounds) == 2 and not isinstance(bounds[0], list):
@@ -80,7 +145,7 @@ class Problem:
         self.stakeholders = []
         self.constraints = []
 
-    def add_stakeholder(self, name, weight, objective, preference_points):
+    def add_stakeholder(self, name, weight, objective, preference_points, x_label=None):
         """
         Add a stakeholder to the problem.
 
@@ -88,12 +153,14 @@ class Problem:
         :param weight: Weight in aggregation (0-1)
         :param objective: String expression (e.g., "11.25*x1 + 13.75*x2")
         :param preference_points: Tuple of ([x_points], [y_points]) for pchip interpolation
+        :param x_label: Optional label for x-axis in plots (e.g., "Cost [billion dollars]")
         """
         self.stakeholders.append({
             'name': name,
             'weight': weight,
             'objective': objective,
-            'preference_points': preference_points
+            'preference_points': preference_points,
+            'x_label': x_label if x_label else 'Objective value'
         })
 
     def add_constraint(self, expression):
