@@ -75,6 +75,7 @@ class Result:
 
         fig.tight_layout()
         plt.show()
+        return fig
 
     def print_summary(self):
         """Public method to print optimization summary."""
