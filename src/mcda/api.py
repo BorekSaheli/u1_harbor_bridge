@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from scipy.interpolate import pchip_interpolate
-from genetic_algorithm_pfm import GeneticAlgorithm
+from src.genetic_algorithm_pfm import GeneticAlgorithm
 
 
 class Result:

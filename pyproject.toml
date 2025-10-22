@@ -1,14 +1,33 @@
 [project]
-name = "optimization-model"
+name = "harbor-bridge-optimization"
 version = "0.1.0"
-description = "Tilburg area development optimization case"
+description = "Multi-Criteria Decision Analysis for harbor bridge design optimization"
+readme = "README.md"
 requires-python = ">=3.12"
+authors = [
+    {name = "Tilburg University - Systems Engineering"}
+]
+keywords = ["optimization", "mcda", "genetic-algorithm", "multi-stakeholder"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
 dependencies = [
-    "matplotlib",
-    "numpy",
-    "requests>=2.32.5",
-    "scipy",
-    "urllib3>=2.5.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "jupyter>=1.0.0",
+    "ipykernel>=6.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
 ]
 
 [build-system]
@@ -16,8 +35,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["genetic_algorithm_pfm"]
+packages = ["src"]
 
 [tool.uv]
 managed = true
 package = true
+dev-dependencies = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
